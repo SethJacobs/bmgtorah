@@ -24,7 +24,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <main className="container page">{children}</main>
             <footer className="site-footer">
               <div className="container small muted">
-                © {new Date().getFullYear()} Beis Medrash Gevoha · BMGTorah
+                © {new Date().getFullYear()} Beis Medrash Gevoha · BMGTorah ·{" "}
+                <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a>
               </div>
             </footer>
             <PlayerBar />
