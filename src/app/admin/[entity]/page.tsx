@@ -6,18 +6,18 @@ import { deleteEntity, saveEntity } from "../actions";
 import type { DictKey } from "@/lib/i18n";
 
 // One manager page for speakers, series and venues.
-const CONFIG = {
+const CONFIG: Record<string, { title: string; fields: [string, string][] }> = {
   speakers: { title: "admin.speakers", fields: [["name", "admin.name"], ["name_he", "admin.nameHe"], ["sort_name", "Sort as (Last, First)"], ["photo_url", "Photo URL"], ["bio", "Bio"]] },
   series: { title: "admin.series", fields: [["name", "admin.name"], ["name_he", "admin.nameHe"], ["image_url", "Cover image URL"], ["description", "upload.description"]] },
   venues: { title: "admin.venues", fields: [["name", "admin.name"], ["name_he", "admin.nameHe"], ["location", "Location (city, state)"]] },
-} as const;
+};
 
 type Row = Record<string, string | number | boolean | null>;
 
 export default async function EntityAdmin({ params, searchParams }: { params: Promise<{ entity: string }>; searchParams: Promise<SearchParams> }) {
   const [{ entity }, sp] = await Promise.all([params, searchParams]);
   if (!(entity in CONFIG)) notFound();
-  const cfg = CONFIG[entity as keyof typeof CONFIG];
+  const cfg = CONFIG[entity];
   const { t } = await getT();
   const label = (k: string) => (k.includes(".") ? t(k as DictKey) : k);
   const db = createAdminClient();
