@@ -72,7 +72,7 @@ ffmpeg -i shiur.wav -ac 1 -b:a 48k shiur.mp3
 ### 1. Supabase
 1. Create a free project at supabase.com.
 2. **SQL Editor:** run these files in order:
-   `supabase/migrations/0001_schema.sql` → `0002_functions.sql` → `0003_rls.sql` → `supabase/seed.sql`.
+   `supabase/migrations/0001_schema.sql` → `0002_functions.sql` → `0003_rls.sql` → `0004_security_hardening.sql` → `supabase/seed.sql`.
    *(Optional)* `supabase/demo_data.sql` adds placeholder shiurim so the pages aren't empty. Its header comment shows how to remove them.
 3. **Authentication › URL Configuration:** set *Site URL* to your site, and add `http://localhost:3000/auth/callback` and `https://YOUR-DOMAIN/auth/callback` to *Redirect URLs*.
 4. *(Optional)* **Authentication › Providers › Google** for "Continue with Google". Email magic links work with no setup.

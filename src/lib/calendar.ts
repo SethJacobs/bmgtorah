@@ -20,7 +20,7 @@ export function dafYomi(date = new Date()): { masechta: CalName; daf: number } |
   try {
     const d = new DafYomi(date);
     const masechta = MASECHTA_BY_HEBCAL[d.getName()];
-    return masechta ? { masechta, daf: d.getBlatt() } : null;
+    return masechta ? { masechta, daf: Number(d.getBlatt()) } : null;
   } catch {
     return null;
   }
