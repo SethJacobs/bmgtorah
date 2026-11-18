@@ -1,5 +1,5 @@
 import "server-only";
-import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // Works with any S3-compatible storage. Set S3_* for Backblaze B2 (or anything else);
@@ -55,4 +55,18 @@ export async function presignUpload(key: string, contentType: string) {
 
 export async function deleteObject(key: string) {
   await s3().send(new DeleteObjectCommand({ Bucket: STORAGE.bucket, Key: key }));
+}
+
+/**
+ * Short-lived download/stream URL for a file in a private bucket.
+ * Served through /api/media/<key>, so the bucket never has to be public.
+ */
+export async function presignDownload(key: string, opts: { download?: boolean; expiresIn?: number } = {}) {
+  const filename = key.split("/").pop() ?? "file";
+  const cmd = new GetObjectCommand({
+    Bucket: STORAGE.bucket,
+    Key: key,
+    ...(opts.download ? { ResponseContentDisposition: `attachment; filename="${filename.replace(/"/g, "")}"` } : {}),
+  });
+  return getSignedUrl(s3(), cmd, { expiresIn: opts.expiresIn ?? 6 * 60 * 60 });
 }
