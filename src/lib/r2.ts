@@ -2,17 +2,31 @@ import "server-only";
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
+// Works with any S3-compatible storage. Set S3_* for Backblaze B2 (or anything else);
+// the older R2_* variables still work as a fallback.
+//   Backblaze B2: S3_ENDPOINT=https://s3.<region>.backblazeb2.com  S3_REGION=<region>  e.g. us-east-005
+//   Cloudflare R2: S3_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com  S3_REGION=auto
+const env = (k: string) => process.env[k] || undefined;
+
+export const STORAGE = {
+  endpoint: env("S3_ENDPOINT") ?? (env("R2_ACCOUNT_ID") ? `https://${env("R2_ACCOUNT_ID")}.r2.cloudflarestorage.com` : undefined),
+  region: env("S3_REGION") ?? "auto",
+  accessKeyId: env("S3_ACCESS_KEY_ID") ?? env("R2_ACCESS_KEY_ID") ?? "",
+  secretAccessKey: env("S3_SECRET_ACCESS_KEY") ?? env("R2_SECRET_ACCESS_KEY") ?? "",
+  bucket: env("S3_BUCKET") ?? env("R2_BUCKET") ?? "bmgtorah-media",
+};
+
 let client: S3Client | null = null;
 
-function r2() {
+function s3() {
   if (!client) {
     client = new S3Client({
-      region: "auto",
-      endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-      credentials: {
-        accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-      },
+      region: STORAGE.region,
+      endpoint: STORAGE.endpoint,
+      credentials: { accessKeyId: STORAGE.accessKeyId, secretAccessKey: STORAGE.secretAccessKey },
+      // Presigned browser uploads must not require checksum headers the browser won't send
+      requestChecksumCalculation: "WHEN_REQUIRED",
+      responseChecksumValidation: "WHEN_REQUIRED",
     });
   }
   return client;
@@ -35,10 +49,10 @@ export function makeKey(folder: "shiurim" | "sources" | "images", filename: stri
 
 /** A short-lived URL the browser can PUT the file to directly (the file never touches our server). */
 export async function presignUpload(key: string, contentType: string) {
-  const cmd = new PutObjectCommand({ Bucket: process.env.R2_BUCKET!, Key: key, ContentType: contentType });
-  return getSignedUrl(r2(), cmd, { expiresIn: 60 * 60 });
+  const cmd = new PutObjectCommand({ Bucket: STORAGE.bucket, Key: key, ContentType: contentType });
+  return getSignedUrl(s3(), cmd, { expiresIn: 60 * 60 });
 }
 
 export async function deleteObject(key: string) {
-  await r2().send(new DeleteObjectCommand({ Bucket: process.env.R2_BUCKET!, Key: key }));
+  await s3().send(new DeleteObjectCommand({ Bucket: STORAGE.bucket, Key: key }));
 }
