@@ -3,6 +3,10 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useT } from "@/components/I18nProvider";
 
+// Email magic links are hidden until a custom SMTP sender is set up in Supabase.
+// To bring them back, set NEXT_PUBLIC_EMAIL_LOGIN=1 in Vercel and redeploy.
+const EMAIL_LOGIN = process.env.NEXT_PUBLIC_EMAIL_LOGIN === "1";
+
 export default function LoginPage() {
   const { t } = useT();
   const [email, setEmail] = useState("");
@@ -26,17 +30,23 @@ export default function LoginPage() {
   return (
     <div className="form-card" style={{ maxWidth: 440, margin: "30px auto" }}>
       <h1>{t("login.title")}</h1>
-      {sent ? (
-        <p className="notice">{t("login.sent")}</p>
-      ) : (
-        <form onSubmit={sendLink}>
-          <label htmlFor="email">{t("login.email")}</label>
-          <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} dir="ltr" />
-          <p><button className="btn primary" type="submit">{t("login.sendLink")}</button></p>
-        </form>
+      <p><button className="btn primary" onClick={google} style={{ width: "100%", justifyContent: "center", padding: "10px 14px" }}>
+        {t("login.google")}
+      </button></p>
+      {EMAIL_LOGIN && (
+        <>
+          <p className="muted small" style={{ textAlign: "center" }}>{t("login.or")}</p>
+          {sent ? (
+            <p className="notice">{t("login.sent")}</p>
+          ) : (
+            <form onSubmit={sendLink}>
+              <label htmlFor="email">{t("login.email")}</label>
+              <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} dir="ltr" />
+              <p><button className="btn" type="submit">{t("login.sendLink")}</button></p>
+            </form>
+          )}
+        </>
       )}
-      <p className="muted small">{t("login.or")}</p>
-      <button className="btn" onClick={google}>{t("login.google")}</button>
       {error && <p className="error">{error}</p>}
     </div>
   );
