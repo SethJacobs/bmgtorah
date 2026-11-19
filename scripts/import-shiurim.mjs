@@ -29,10 +29,14 @@ const KEEP = args.includes("--keep");
 const dir = resolve(args.find((a) => !a.startsWith("--")) ?? "../bmgtorah-import/audio");
 
 const need = ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "S3_ENDPOINT", "S3_REGION", "S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY", "S3_BUCKET"];
-const missing = need.filter((k) => !process.env[k]);
+const missing = need.filter((k) => !process.env[k] || process.env[k].includes("SENSITIVE"));
 if (missing.length) { console.error("Missing in .env.local:", missing.join(", ")); process.exit(1); }
 
-const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { persistSession: false },
+  // This script never uses realtime; a stand-in avoids Node 20's missing WebSocket error
+  realtime: { transport: class NoWebSocket {} },
+});
 const s3 = new S3Client({
   region: process.env.S3_REGION, endpoint: process.env.S3_ENDPOINT,
   credentials: { accessKeyId: process.env.S3_ACCESS_KEY_ID, secretAccessKey: process.env.S3_SECRET_ACCESS_KEY },
