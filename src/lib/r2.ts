@@ -1,5 +1,5 @@
 import "server-only";
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetBucketCorsCommand, GetObjectCommand, PutBucketCorsCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // Works with any S3-compatible storage. Set S3_* for Backblaze B2 (or anything else);
@@ -69,4 +69,29 @@ export async function presignDownload(key: string, opts: { download?: boolean; e
     ...(opts.download ? { ResponseContentDisposition: `attachment; filename="${filename.replace(/"/g, "")}"` } : {}),
   });
   return getSignedUrl(s3(), cmd, { expiresIn: opts.expiresIn ?? 6 * 60 * 60 });
+}
+
+/** Lets browsers on these origins PUT files straight into the bucket (needed for uploads). */
+export async function setUploadCors(origins: string[]) {
+  await s3().send(new PutBucketCorsCommand({
+    Bucket: STORAGE.bucket,
+    CORSConfiguration: {
+      CORSRules: [{
+        AllowedOrigins: origins,
+        AllowedMethods: ["GET", "HEAD", "PUT"],
+        AllowedHeaders: ["*"],
+        ExposeHeaders: ["ETag"],
+        MaxAgeSeconds: 3600,
+      }],
+    },
+  }));
+}
+
+export async function getCors() {
+  try {
+    const r = await s3().send(new GetBucketCorsCommand({ Bucket: STORAGE.bucket }));
+    return r.CORSRules ?? [];
+  } catch (e) {
+    return { error: (e as Error).name + ": " + (e as Error).message };
+  }
 }
