@@ -11,6 +11,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <nav className="admin-nav">
         <Link className="btn" href="/admin">{t("admin.review")}</Link>
         <Link className="btn" href="/admin/shiurim">{t("admin.allShiurim")}</Link>
+        <Link className="btn" href="/admin/bulk">Bulk upload</Link>
         <Link className="btn" href="/admin/speakers">{t("admin.speakers")}</Link>
         <Link className="btn" href="/admin/series">{t("admin.series")}</Link>
         <Link className="btn" href="/admin/venues">{t("admin.venues")}</Link>
